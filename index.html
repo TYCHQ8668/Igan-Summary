@@ -1183,6 +1183,9 @@
                 <select class="year-selector" id="summaryYearSelector">
                     <option value="全部">全部年份</option>
                 </select>
+                <button class="btn-refresh" id="summaryRefreshBtn" title="从服务器获取最新数据">
+                    <i class="fa-solid fa-rotate-right"></i> 更新数据
+                </button>
                 <button class="btn-reset" id="summaryResetBtn" title="一键复原所有筛选条件">
                     <i class="fa-solid fa-undo"></i> 一键复原
                 </button>
@@ -1442,7 +1445,7 @@
     </div>
     <script>
         (function() {
-            const API_URL = 'https://script.google.com/macros/s/AKfycbyaqzdITIAUadl4um7ewaXq5TvsYODWXaqLARB2FBAvYyCaHu-9j_ZeUNNvGxgQyO1q/exec';
+            const API_URL = 'https://script.google.com/macros/s/AKfycbwM1dZHCQ5OrH9JKQmhN65P_WYGsp0InJgRYP7kMZXWsbAJcngRQwr8z__QQUkumiJI/exec';
             const CATEGORIES = ['Shell', 'Petronas', 'Cash', 'Delta Swasta', 'Bescare SDN BHD', 'Tangki'];
             const SUMMARY_CATEGORIES = ['Fuel Expense', 'Maintenance', 'Lubricant', 'Tyres', 'Charges', 'Others', 'Saman',
                 'Insurance', 'Revenue', 'Profit'
@@ -1566,6 +1569,7 @@
             const summaryStatCardVehicles = $('summaryStatCardVehicles');
             const summaryStatCardExpense = $('summaryStatCardExpense');
             const summaryYearSelector = $('summaryYearSelector');
+            const summaryRefreshBtn = $('summaryRefreshBtn');
             const summaryResetBtn = $('summaryResetBtn');
             const summaryExportBtn = $('summaryExportBtn');
             const summaryLineToggle = $('summaryLineToggle');
@@ -1638,9 +1642,13 @@
 
             function setLoading(loading) {
                 if (loading) { refreshBtn.disabled = true;
-                    refreshBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 更新中...'; } else { refreshBtn
-                        .disabled = false;
-                    refreshBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> 更新数据'; }
+                    refreshBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 更新中...';
+                    if (summaryRefreshBtn) { summaryRefreshBtn.disabled = true;
+                        summaryRefreshBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 更新中...'; } } else {
+                    refreshBtn.disabled = false;
+                    refreshBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> 更新数据';
+                    if (summaryRefreshBtn) { summaryRefreshBtn.disabled = false;
+                        summaryRefreshBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> 更新数据'; } }
             }
 
             function isExcludedMonth(name) { return EXCLUDED_MONTH_PREFIXES.some(p => name.startsWith(p)); }
@@ -3046,7 +3054,6 @@
                 });
             }
 
-            // ==================== 费用分类弹窗 ====================
             function openSummaryExpenseModal() {
                 tempSummaryCategories = [...summaryCategories];
                 renderSummaryExpenseModalList();
@@ -3096,7 +3103,6 @@
                 renderSummaryExpenseModalList();
             }
 
-            // ==================== Summary 弹窗 ====================
             function openSummaryVehicleModal() {
                 tempSummaryVehicles = [...summaryVehicles];
                 summaryVehicleSearchTerm = '';
@@ -3618,6 +3624,7 @@
                     if (e.target.id === 'summaryMonthSelector') { summaryMonth = e.target.value;
                         renderSummary(); }
                 });
+                summaryRefreshBtn.addEventListener('click', () => !isRefreshing && loadData(true));
                 summaryResetBtn.addEventListener('click', resetSummaryFilters);
                 summaryExportBtn.addEventListener('click', summaryExportToExcel);
                 summaryLineToggle.addEventListener('click', e => {

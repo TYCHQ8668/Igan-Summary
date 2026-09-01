@@ -1149,6 +1149,13 @@
                                 <div class="nav-desc">收支总览数据</div>
                             </div>
                         </button>
+                        <button class="nav-dropdown-item" data-page="monitoring">
+                            <i class="fa-solid fa-chart-simple"></i>
+                            <div>
+                                <div>Fuel Monitoring</div>
+                                <div class="nav-desc">油耗监测数据</div>
+                            </div>
+                        </button>
                     </div>
                 </div>
                 <h1><i class="fa-solid fa-gas-pump"></i> <span id="pageTitle">Fuel Dashboard</span></h1>
@@ -1190,6 +1197,24 @@
                     <i class="fa-solid fa-undo"></i> 一键复原
                 </button>
                 <button class="btn-export" id="summaryExportBtn" title="导出当前数据为Excel">
+                    <i class="fa-solid fa-file-excel"></i> 导出 Excel
+                </button>
+            </div>
+            <div class="header-right" id="monitoringHeaderRight" style="display:none;">
+                <div class="badge">
+                    <i class="fa-solid fa-database"></i>
+                    <span class="cache-badge"><i class="fa-solid fa-clock"></i> <span id="monitoringCacheStatus">检查中...</span></span>
+                </div>
+                <select class="year-selector" id="monitoringYearSelector">
+                    <option value="全部">全部年份</option>
+                </select>
+                <button class="btn-refresh" id="monitoringRefreshBtn" title="从服务器获取最新数据">
+                    <i class="fa-solid fa-rotate-right"></i> 更新数据
+                </button>
+                <button class="btn-reset" id="monitoringResetBtn" title="一键复原所有筛选条件">
+                    <i class="fa-solid fa-undo"></i> 一键复原
+                </button>
+                <button class="btn-export" id="monitoringExportBtn" title="导出当前数据为Excel">
                     <i class="fa-solid fa-file-excel"></i> 导出 Excel
                 </button>
             </div>
@@ -1332,6 +1357,79 @@
                 <span><i class="fa-regular fa-clock"></i> 数据基于收支总览工作表</span>
             </div>
         </div>
+        <div id="monitoringPage" style="display:none;">
+            <div class="stats-grid">
+                <div class="stat-card clickable" id="monitoringStatCardVehicles" title="点击选择车牌">
+                    <div class="label">车辆总数</div>
+                    <div class="value" id="monitoringStatVehicles">0</div>
+                    <div class="sub" id="monitoringStatVehiclesSub"></div>
+                </div>
+                <div class="stat-card clickable" id="monitoringStatCardTypes" title="点击选择车型">
+                    <div class="label">车型</div>
+                    <div class="value" id="monitoringStatTypes">0</div>
+                    <div class="sub" id="monitoringStatTypesSub"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">总油耗</div>
+                    <div class="value" id="monitoringStatActualFuel">0</div>
+                    <div class="sub">Actual Fuel Usage</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">总燃油费</div>
+                    <div class="value" id="monitoringStatFuelExpense">0</div>
+                    <div class="sub">Fuel Expense</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">总销售用燃油</div>
+                    <div class="value" id="monitoringStatOilTransferred">0</div>
+                    <div class="sub">Oil Transffered into Tangki</div>
+                </div>
+            </div>
+            <div class="charts-row">
+                <div class="chart-panel">
+                    <div class="panel-title">
+                        <i class="fa-solid fa-chart-line"></i> 趋势曲线
+                        <div class="summary-line-toggle" id="monitoringLineToggle">
+                            <button class="summary-line-btn active-expense" data-mline="actual_fuel">Actual Fuel</button>
+                            <button class="summary-line-btn active-revenue" data-mline="fuel_expense">Fuel Expense</button>
+                            <button class="summary-line-btn active-profit" data-mline="revenue">Revenue</button>
+                        </div>
+                    </div>
+                    <div class="chart-canvas-wrap"><canvas id="monitoringTrendChart"></canvas></div>
+                </div>
+                <div class="chart-panel">
+                    <div class="panel-title">
+                        <i class="fa-solid fa-trophy"></i> 排行榜 TOP 20
+                        <div class="rank-toggle-group" id="monitoringRankToggleGroup">
+                            <button class="rank-toggle-btn active-expense" data-mrtype="actual_fuel_high">油耗最高</button>
+                            <button class="rank-toggle-btn active-expense" data-mrtype="actual_fuel_low">油耗最低</button>
+                            <button class="rank-toggle-btn active-expense" data-mrtype="fuel_expense_high">燃油费最高</button>
+                            <button class="rank-toggle-btn active-expense" data-mrtype="fuel_expense_low">燃油费最低</button>
+                        </div>
+                    </div>
+                    <ul class="rank-list" id="monitoringRankList"></ul>
+                </div>
+                <div class="chart-panel">
+                    <div class="panel-title">
+                        <i class="fa-solid fa-chart-pie"></i> 分类占比
+                    </div>
+                    <div class="chart-canvas-wrap"><canvas id="monitoringPieChart"></canvas></div>
+                </div>
+            </div>
+            <div class="table-container">
+                <div class="table-scroll-wrapper">
+                    <table class="sticky-table" id="monitoringTable">
+                        <thead id="monitoringTableHead"></thead>
+                        <tbody id="monitoringTableBody">
+                            <tr><td colspan="10" class="empty-state"><i class="fa-solid fa-spinner fa-pulse"></i> 加载数据中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="footer">
+                <span><i class="fa-regular fa-clock"></i> 数据基于油耗监测工作表</span>
+            </div>
+        </div>
         <div class="toast" id="toast"><i class="fa-solid fa-check-circle"></i> <span id="toastMsg">已更新</span></div>
         <div class="modal-overlay" id="vehicleModalOverlay">
             <div class="modal-dialog">
@@ -1442,10 +1540,42 @@
                 </div>
             </div>
         </div>
+        <div class="modal-overlay" id="monitoringVehicleModalOverlay">
+            <div class="modal-dialog">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-car"></i> 选择车牌（可多选）</h3>
+                    <button class="modal-close" id="monitoringModalCloseVehicle"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-search">
+                    <input type="text" id="monitoringModalSearchVehicle" placeholder="搜索车牌...">
+                </div>
+                <div class="modal-list" id="monitoringModalVehicleList"></div>
+                <div class="modal-footer">
+                    <button class="modal-btn modal-btn-clear" id="monitoringModalClearVehicle">显示全部</button>
+                    <button class="modal-btn modal-btn-confirm" id="monitoringModalConfirmVehicle">确认</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-overlay" id="monitoringTypeModalOverlay">
+            <div class="modal-dialog">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-shapes"></i> 选择车型（可多选）</h3>
+                    <button class="modal-close" id="monitoringModalCloseType"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-search">
+                    <input type="text" id="monitoringModalSearchType" placeholder="搜索车型...">
+                </div>
+                <div class="modal-list" id="monitoringModalTypeList"></div>
+                <div class="modal-footer">
+                    <button class="modal-btn modal-btn-clear" id="monitoringModalClearType">显示全部</button>
+                    <button class="modal-btn modal-btn-confirm" id="monitoringModalConfirmType">确认</button>
+                </div>
+            </div>
+        </div>
     </div>
     <script>
         (function() {
-            const API_URL = 'https://script.google.com/macros/s/AKfycbx_sL43Em_l6VwFJ04ZTghV8hfOkMu0Qj7-77TeYMC_yEku6BIy4IdVTLSEn-hxZIQh/exec';
+            const API_URL = 'https://script.google.com/macros/s/AKfycbx1r4myv2-C3OALs1KKF6KyGQi2wy0fUREmtzAni_d_sfBFbRhgz54y9rBlViwion0d/exec';
             const CATEGORIES = ['Shell', 'Petronas', 'Cash', 'Delta Swasta', 'Bescare SDN BHD', 'Tangki'];
             const SUMMARY_CATEGORIES = ['Fuel Expense', 'Maintenance', 'Lubricant', 'Tyres', 'Charges', 'Others', 'Saman',
                 'Insurance', 'Revenue', 'Profit'
@@ -1453,8 +1583,12 @@
             const EXPENSE_CATEGORIES = ['Fuel Expense', 'Maintenance', 'Lubricant', 'Tyres', 'Charges', 'Others', 'Saman',
                 'Insurance'
             ];
+            const MONITORING_CATEGORIES = ['Actual Fuel Usage', 'Oil Transffered into Tangki', 'Fuel Expense', 'Revenue'];
             const PIE_COLORS = ['#1f5f9e', '#1f8b6b', '#e6a817', '#8b5cf6', '#ef4444', '#06b6d4'];
-            const SUMMARY_PIE_COLORS = ['#ef4444', '#f97316', '#e6a817', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16', '#6366f1'];
+            const SUMMARY_PIE_COLORS = ['#ef4444', '#f97316', '#e6a817', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16',
+                '#6366f1'
+            ];
+            const MONITORING_PIE_COLORS = ['#1f5f9e', '#e6a817', '#ef4444', '#1f8b6b'];
             const EXCLUDED_MONTH_PREFIXES = ['TOTAL', 'AVERAGE'];
             const CACHE_TTL = 3 * 24 * 60 * 60 * 1000;
             const CACHE_KEY = 'fuel_dashboard_data';
@@ -1509,6 +1643,23 @@
             let tempSummaryTypes = [];
             let tempSummaryFuels = [];
             let tempSummaryCategories = [...SUMMARY_CATEGORIES];
+            let monitoringData = null;
+            let monitoringYear = '全部',
+                monitoringMonth = '全部';
+            let monitoringVehicles = [];
+            let monitoringTypes = [];
+            let monitoringCategories = [...MONITORING_CATEGORIES];
+            let monitoringLineShow = { actual_fuel: true, fuel_expense: true, revenue: true };
+            let monitoringRankType = 'actual_fuel_high';
+            let monitoringTrendChart = null;
+            let monitoringPieChart = null;
+            let monitoringYearOptionsBuilt = false;
+            let monitoringVehicleModalVisible = false,
+                monitoringTypeModalVisible = false;
+            let monitoringVehicleSearchTerm = '',
+                monitoringTypeSearchTerm = '';
+            let tempMonitoringVehicles = [];
+            let tempMonitoringTypes = [];
             const $ = id => document.getElementById(id);
             const statVehicles = $('statVehicles'),
                 statTypes = $('statTypes'),
@@ -1557,9 +1708,11 @@
             const pageTitle = $('pageTitle');
             const fuelPage = $('fuelPage');
             const summaryPage = $('summaryPage');
+            const monitoringPage = $('monitoringPage');
             const fuelHeaderRight = $('fuelHeaderRight');
             const resetBtn = $('resetBtn');
             const summaryHeaderRight = $('summaryHeaderRight');
+            const monitoringHeaderRight = $('monitoringHeaderRight');
             const summaryStatVehicles = $('summaryStatVehicles'),
                 summaryStatExpense = $('summaryStatExpense'),
                 summaryStatRevenue = $('summaryStatRevenue'),
@@ -1600,6 +1753,36 @@
             const summaryModalCloseExpense = $('summaryModalCloseExpense');
             const summaryModalClearExpense = $('summaryModalClearExpense');
             const summaryModalConfirmExpense = $('summaryModalConfirmExpense');
+            const monitoringStatVehicles = $('monitoringStatVehicles'),
+                monitoringStatTypes = $('monitoringStatTypes'),
+                monitoringStatActualFuel = $('monitoringStatActualFuel'),
+                monitoringStatFuelExpense = $('monitoringStatFuelExpense'),
+                monitoringStatOilTransferred = $('monitoringStatOilTransferred');
+            const monitoringStatVehiclesSub = $('monitoringStatVehiclesSub');
+            const monitoringStatTypesSub = $('monitoringStatTypesSub');
+            const monitoringStatCardVehicles = $('monitoringStatCardVehicles');
+            const monitoringStatCardTypes = $('monitoringStatCardTypes');
+            const monitoringYearSelector = $('monitoringYearSelector');
+            const monitoringRefreshBtn = $('monitoringRefreshBtn');
+            const monitoringResetBtn = $('monitoringResetBtn');
+            const monitoringExportBtn = $('monitoringExportBtn');
+            const monitoringLineToggle = $('monitoringLineToggle');
+            const monitoringRankToggleGroup = $('monitoringRankToggleGroup');
+            const monitoringRankList = $('monitoringRankList');
+            const monitoringTableHead = $('monitoringTableHead');
+            const monitoringTableBody = $('monitoringTableBody');
+            const monitoringVehicleModalOverlay = $('monitoringVehicleModalOverlay');
+            const monitoringModalVehicleList = $('monitoringModalVehicleList');
+            const monitoringModalSearchVehicle = $('monitoringModalSearchVehicle');
+            const monitoringModalCloseVehicle = $('monitoringModalCloseVehicle');
+            const monitoringModalClearVehicle = $('monitoringModalClearVehicle');
+            const monitoringModalConfirmVehicle = $('monitoringModalConfirmVehicle');
+            const monitoringTypeModalOverlay = $('monitoringTypeModalOverlay');
+            const monitoringModalTypeList = $('monitoringModalTypeList');
+            const monitoringModalSearchType = $('monitoringModalSearchType');
+            const monitoringModalCloseType = $('monitoringModalCloseType');
+            const monitoringModalClearType = $('monitoringModalClearType');
+            const monitoringModalConfirmType = $('monitoringModalConfirmType');
 
             function fmt(num) {
                 const n = Number(num);
@@ -1641,14 +1824,21 @@
                     status; }
 
             function setLoading(loading) {
-                if (loading) { refreshBtn.disabled = true;
+                if (loading) {
+                    refreshBtn.disabled = true;
                     refreshBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 更新中...';
                     if (summaryRefreshBtn) { summaryRefreshBtn.disabled = true;
-                        summaryRefreshBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 更新中...'; } } else {
+                        summaryRefreshBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 更新中...'; }
+                    if (monitoringRefreshBtn) { monitoringRefreshBtn.disabled = true;
+                        monitoringRefreshBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 更新中...'; }
+                } else {
                     refreshBtn.disabled = false;
                     refreshBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> 更新数据';
                     if (summaryRefreshBtn) { summaryRefreshBtn.disabled = false;
-                        summaryRefreshBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> 更新数据'; } }
+                        summaryRefreshBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> 更新数据'; }
+                    if (monitoringRefreshBtn) { monitoringRefreshBtn.disabled = false;
+                        monitoringRefreshBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> 更新数据'; }
+                }
             }
 
             function isExcludedMonth(name) { return EXCLUDED_MONTH_PREFIXES.some(p => name.startsWith(p)); }
@@ -1784,7 +1974,8 @@
                         for (let i = sorted.length - 1; i >= 0; i--) {
                             const y = extractYear(sorted[i]);
                             const mAbbr = extractMonthAbbr(sorted[i]);
-                            if (y < thisYear || (y === thisYear && monthSortKey(mAbbr) <= monthSortKey(thisMonthAbbr))) {
+                            if (y < thisYear || (y === thisYear && monthSortKey(mAbbr) <= monthSortKey(
+                                    thisMonthAbbr))) {
                                 endIdx = i;
                                 break;
                             }
@@ -1795,7 +1986,8 @@
                     return sorted.slice(startIdx, endIdx + 1);
                 } else {
                     const yearMonths = allRegularMonths.filter(m => extractYear(m) === selectedYear);
-                    return yearMonths.sort((a, b) => monthSortKey(extractMonthAbbr(a)) - monthSortKey(extractMonthAbbr(b)));
+                    return yearMonths.sort((a, b) => monthSortKey(extractMonthAbbr(a)) - monthSortKey(extractMonthAbbr(
+                        b)));
                 }
             }
 
@@ -2058,8 +2250,10 @@
                                 callbacks: {
                                     label: function(ctx) {
                                         const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                                        const percentage = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : '0.0';
-                                        const value = pieType === 'rm' ? ('RM ' + fmtComma(ctx.parsed)) : (fmtComma(ctx.parsed) + ' L');
+                                        const percentage = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) :
+                                            '0.0';
+                                        const value = pieType === 'rm' ? ('RM ' + fmtComma(ctx.parsed)) : (fmtComma(
+                                            ctx.parsed) + ' L');
                                         return ctx.label + ': ' + value + ' (' + percentage + '%)';
                                     }
                                 }
@@ -2306,7 +2500,8 @@
                 if (selectedYear !== '全部') filtered = filtered.filter(m => extractYear(m) === selectedYear);
                 if (selectedMonth !== '全部') filtered = filtered.filter(m => extractMonthAbbr(m) === selectedMonth);
                 const displayMonths = selectedMonth === '全部'
-                    ? [...filtered, ...(selectedYear !== '全部' ? excluded.filter(m => extractYear(m) === selectedYear) : excluded)]
+                    ? [...filtered, ...(selectedYear !== '全部' ? excluded.filter(m => extractYear(m) === selectedYear) :
+                        excluded)]
                     : filtered;
 
                 const filteredVehicles = getFilteredVehicles(cachedData.vehicles);
@@ -2375,7 +2570,8 @@
                     const type = getTypeCombo(v);
 
                     if (lastType !== null && type !== lastType) {
-                        exportData.push(generateSubtotalRow('车型小计', lastType, displayMonths, typeSubtotals[lastType]));
+                        exportData.push(generateSubtotalRow('车型小计', lastType, displayMonths, typeSubtotals[
+                        lastType]));
                     }
 
                     const row = [v.vehicle || '-', type, v.fuel || '-'];
@@ -2469,7 +2665,8 @@
                 const ws = XLSX.utils.aoa_to_sheet(exportData);
 
                 const fixedCols = 3;
-                const totalCols = fixedCols + displayMonths.reduce((sum, m) => sum + exportCats.length * valueTypes.length, 0);
+                const totalCols = fixedCols + displayMonths.reduce((sum, m) => sum + exportCats.length * valueTypes
+                    .length, 0);
                 const totalRows = exportData.length;
 
                 const colWidths = [
@@ -2500,7 +2697,8 @@
                 });
                 ws['!merges'] = merges;
 
-                ws['!freeze'] = { xSplit: fixedCols, ySplit: 3, topLeftCell: XLSX.utils.encode_cell({ r: 3, c: fixedCols }), activePane: 'bottomRight', state: 'frozen' };
+                ws['!freeze'] = { xSplit: fixedCols, ySplit: 3, topLeftCell: XLSX.utils.encode_cell({ r: 3, c: fixedCols }),
+                    activePane: 'bottomRight', state: 'frozen' };
 
                 for (let r = 3; r < totalRows; r++) {
                     for (let c = fixedCols; c < totalCols; c++) {
@@ -2602,7 +2800,8 @@
                 let head =
                     `<tr class="filter-row"><td class="col-fixed" colspan="2"><span class="filter-label"><i class="fa-solid fa-calendar-alt"></i> 月份筛选</span><select class="month-selector" id="monthSelector"><option value="全部">全部月份</option>`;
                 monthAbbrs.forEach(m => head += `<option value="${m}">${m}</option>`);
-                head += `</select><span class="category-filter-wrap"><span class="filter-label"><i class="fa-solid fa-gas-pump"></i> 类别</span><span class="category-chips" id="categoryChipsWrap"></span></span></td>`;
+                head +=
+                    `</select><span class="category-filter-wrap"><span class="filter-label"><i class="fa-solid fa-gas-pump"></i> 类别</span><span class="category-chips" id="categoryChipsWrap"></span></span></td>`;
                 head +=
                     `<td colspan="${display.length+2}" style="background:#f8faff;"><span style="font-size:.75rem;color:#5e7390;"><i class="fa-solid fa-filter"></i> 共 ${filtered.length} 个月份${selectedMonth==='全部'&&display.length>filtered.length?` + ${display.length-filtered.length} 个汇总`:''}</span></td></tr>`;
                 head += `<tr>`;
@@ -2689,8 +2888,10 @@
                 fetchData(force).then(d => {
                         cachedData = d.fuel || d;
                         summaryData = d['车辆花费与收入'] || null;
+                        monitoringData = d['Fuel Monitoring'] || null;
                         render(cachedData);
                         renderSummary();
+                        renderMonitoring();
                     })
                     .catch(err => {
                         tableBody.innerHTML =
@@ -2726,8 +2927,7 @@
                 cachedData && render(cachedData);
                 showToast('已复原所有筛选条件', 'fa-undo');
             }
-
-            // ==================== Summary Report ====================
+            // ==================== Summary Report 功能 ====================
             function getSummaryFilteredVehicles(allVehicles) {
                 let result = [...allVehicles];
                 if (summaryVehicles.length > 0) {
@@ -2947,7 +3147,8 @@
                 const top20 = rankings.slice(0, 20);
 
                 if (top20.length === 0) {
-                    summaryRankList.innerHTML = '<li class="rank-empty"><i class="fa-solid fa-box-open"></i> 暂无数据</li>';
+                    summaryRankList.innerHTML =
+                        '<li class="rank-empty"><i class="fa-solid fa-box-open"></i> 暂无数据</li>';
                     return;
                 }
 
@@ -3021,7 +3222,8 @@
                 if (data.length === 0) {
                     summaryPieChart = new Chart(ctx, {
                         type: 'doughnut',
-                        data: { labels: ['暂无数据'], datasets: [{ data: [1], backgroundColor: ['#eef2f8'], borderWidth: 0 }] },
+                        data: { labels: ['暂无数据'], datasets: [{ data: [1], backgroundColor: ['#eef2f8'],
+                                borderWidth: 0 }] },
                         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false },
                                 tooltip: { enabled: false } } }
                     });
@@ -3044,8 +3246,10 @@
                                 callbacks: {
                                     label: function(ctx) {
                                         const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                                        const percentage = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : '0.0';
-                                        return ctx.label + ': RM ' + fmtComma(ctx.parsed) + ' (' + percentage + '%)';
+                                        const percentage = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) :
+                                            '0.0';
+                                        return ctx.label + ': RM ' + fmtComma(ctx.parsed) + ' (' + percentage +
+                                            '%)';
                                     }
                                 }
                             }
@@ -3302,7 +3506,8 @@
                 if (summaryYear !== '全部') filtered = filtered.filter(m => extractYear(m) === summaryYear);
                 if (summaryMonth !== '全部') filtered = filtered.filter(m => extractMonthAbbr(m) === summaryMonth);
                 const displayMonths = summaryMonth === '全部'
-                    ? [...filtered, ...(summaryYear !== '全部' ? excluded.filter(m => extractYear(m) === summaryYear) : excluded)]
+                    ? [...filtered, ...(summaryYear !== '全部' ? excluded.filter(m => extractYear(m) === summaryYear) :
+                        excluded)]
                     : filtered;
 
                 const filteredVehicles = getSummaryFilteredVehicles(summaryData.vehicles);
@@ -3527,30 +3732,696 @@
                 });
                 summaryTableBody.innerHTML = body;
             }
+            // ==================== Fuel Monitoring 功能 ====================
+            function getMonitoringFilteredVehicles(allVehicles) {
+                let result = [...allVehicles];
+                if (monitoringVehicles.length > 0) {
+                    result = result.filter(v => monitoringVehicles.includes(v.vehicle));
+                }
+                if (monitoringTypes.length > 0) {
+                    result = result.filter(v => monitoringTypes.includes(getTypeCombo(v)));
+                }
+                return result;
+            }
 
+            function getMonitoringValue(v, month, cat) {
+                const md = v.months[month];
+                if (!md) return 0;
+                const val = md[cat];
+                return val || 0;
+            }
+
+            function updateMonitoringLineToggleUI() {
+                monitoringLineToggle.querySelectorAll('.summary-line-btn').forEach(b => {
+                    const line = b.dataset.mline;
+                    let activeClass = '';
+                    if (line === 'actual_fuel') activeClass = 'active-expense';
+                    else if (line === 'fuel_expense') activeClass = 'active-revenue';
+                    else activeClass = 'active-profit';
+                    b.className = `summary-line-btn ${monitoringLineShow[line] ? activeClass : ''}`;
+                });
+            }
+
+            function updateMonitoringRankToggleUI() {
+                monitoringRankToggleGroup.querySelectorAll('.rank-toggle-btn').forEach(b => {
+                    const isActive = b.dataset.mrtype === monitoringRankType;
+                    b.className = 'rank-toggle-btn active-expense';
+                    b.style.opacity = isActive ? '1' : '0.5';
+                });
+            }
+
+            function updateMonitoringTrendChart(vehicles, regularMonths) {
+                const ctx = document.getElementById('monitoringTrendChart');
+                if (!ctx) return;
+
+                let monthsToUse = regularMonths;
+                if (monitoringMonth !== '全部') {
+                    monthsToUse = regularMonths.filter(m => extractMonthAbbr(m) === monitoringMonth);
+                    if (monitoringYear !== '全部') {
+                        monthsToUse = monthsToUse.filter(m => extractYear(m) === monitoringYear);
+                    }
+                } else if (monitoringYear !== '全部') {
+                    monthsToUse = regularMonths.filter(m => extractYear(m) === monitoringYear);
+                }
+
+                const sortedMonths = [...monthsToUse].sort((a, b) => {
+                    const ya = extractYear(a),
+                        yb = extractYear(b);
+                    if (ya !== yb) return ya.localeCompare(yb);
+                    return monthSortKey(extractMonthAbbr(a)) - monthSortKey(extractMonthAbbr(b));
+                });
+
+                const labels = sortedMonths;
+                const datasets = [];
+
+                if (monitoringLineShow.actual_fuel) {
+                    const data = sortedMonths.map(m => {
+                        let sum = 0;
+                        vehicles.forEach(v => { sum += getMonitoringValue(v, m, 'Actual Fuel Usage'); });
+                        return parseFloat(sum.toFixed(2));
+                    });
+                    datasets.push({
+                        label: 'Actual Fuel Usage',
+                        data: data,
+                        borderColor: '#1f5f9e',
+                        backgroundColor: 'rgba(31,95,158,0.06)',
+                        borderWidth: 2,
+                        tension: 0.35,
+                        fill: true,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#1f5f9e'
+                    });
+                }
+
+                if (monitoringLineShow.fuel_expense) {
+                    const data = sortedMonths.map(m => {
+                        let sum = 0;
+                        vehicles.forEach(v => { sum += getMonitoringValue(v, m, 'Fuel Expense'); });
+                        return parseFloat(sum.toFixed(2));
+                    });
+                    datasets.push({
+                        label: 'Fuel Expense',
+                        data: data,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239,68,68,0.06)',
+                        borderWidth: 2,
+                        tension: 0.35,
+                        fill: true,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#ef4444'
+                    });
+                }
+
+                if (monitoringLineShow.revenue) {
+                    const data = sortedMonths.map(m => {
+                        let sum = 0;
+                        vehicles.forEach(v => { sum += getMonitoringValue(v, m, 'Revenue'); });
+                        return parseFloat(sum.toFixed(2));
+                    });
+                    datasets.push({
+                        label: 'Revenue',
+                        data: data,
+                        borderColor: '#1f8b6b',
+                        backgroundColor: 'rgba(31,139,107,0.06)',
+                        borderWidth: 2,
+                        tension: 0.35,
+                        fill: true,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#1f8b6b'
+                    });
+                }
+
+                if (monitoringTrendChart) monitoringTrendChart.destroy();
+
+                if (datasets.length === 0) {
+                    monitoringTrendChart = new Chart(ctx, {
+                        type: 'line',
+                        data: { labels: ['暂无数据'], datasets: [{ data: [0], borderColor: '#eef2f8', borderWidth: 1 }] },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                    });
+                    return;
+                }
+
+                monitoringTrendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: labels, datasets: datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16, boxWidth: 8,
+                                    font: { size: 10 } } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        let displayVal = fmtComma(ctx.parsed.y);
+                                        if (ctx.dataset.label === 'Actual Fuel Usage') {
+                                            displayVal += ' L';
+                                        } else if (ctx.dataset.label === 'Fuel Expense' || ctx.dataset.label ===
+                                            'Revenue') {
+                                            displayVal = 'RM ' + displayVal;
+                                        }
+                                        return ctx.dataset.label + ': ' + displayVal;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: { callback: v => v.toFixed(0) },
+                                grid: { color: '#eef3f9' }
+                            },
+                            x: { ticks: { maxRotation: 45, font: { size: 10 } },
+                                grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            function updateMonitoringRankList(vehicles, regularMonths) {
+                let monthsToUse = regularMonths;
+                if (monitoringMonth !== '全部') {
+                    monthsToUse = regularMonths.filter(m => extractMonthAbbr(m) === monitoringMonth);
+                    if (monitoringYear !== '全部') {
+                        monthsToUse = monthsToUse.filter(m => extractYear(m) === monitoringYear);
+                    }
+                } else if (monitoringYear !== '全部') {
+                    monthsToUse = regularMonths.filter(m => extractYear(m) === monitoringYear);
+                }
+
+                let rankings = [];
+                vehicles.forEach(v => {
+                    let actualFuel = 0,
+                        fuelExpense = 0;
+                    monthsToUse.forEach(m => {
+                        actualFuel += getMonitoringValue(v, m, 'Actual Fuel Usage');
+                        fuelExpense += getMonitoringValue(v, m, 'Fuel Expense');
+                    });
+                    rankings.push({
+                        vehicle: v.vehicle || '-',
+                        brand: v.brand || '-',
+                        type: v.type || '-',
+                        actualFuel: parseFloat(actualFuel.toFixed(2)),
+                        fuelExpense: parseFloat(fuelExpense.toFixed(2))
+                    });
+                });
+
+                const sortMap = {
+                    'actual_fuel_high': (a, b) => b.actualFuel - a.actualFuel,
+                    'actual_fuel_low': (a, b) => a.actualFuel - b.actualFuel,
+                    'fuel_expense_high': (a, b) => b.fuelExpense - a.fuelExpense,
+                    'fuel_expense_low': (a, b) => a.fuelExpense - b.fuelExpense
+                };
+                rankings.sort(sortMap[monitoringRankType] || sortMap['actual_fuel_high']);
+                const top20 = rankings.slice(0, 20);
+
+                if (top20.length === 0) {
+                    monitoringRankList.innerHTML =
+                        '<li class="rank-empty"><i class="fa-solid fa-box-open"></i> 暂无数据</li>';
+                    return;
+                }
+
+                let html = '';
+                top20.forEach((r, i) => {
+                    let displayVal = '';
+                    let colorClass = '';
+                    if (monitoringRankType.includes('actual_fuel')) {
+                        displayVal = fmtComma(r.actualFuel) + ' L';
+                        colorClass = 'rm-color';
+                    } else {
+                        displayVal = 'RM ' + fmtComma(r.fuelExpense);
+                        colorClass = 'danger-color';
+                    }
+                    html += `
+                <li class="rank-item">
+                  <span class="rank-num">${i+1}</span>
+                  <div class="rank-info">
+                    <div class="rank-name">${r.vehicle}</div>
+                    <div class="rank-detail">${r.brand} - ${r.type}</div>
+                  </div>
+                  <span class="rank-value ${colorClass}">${displayVal}</span>
+                </li>`;
+                });
+                monitoringRankList.innerHTML = html;
+            }
+
+            function updateMonitoringPieChart(vehicles, regularMonths) {
+                const ctx = document.getElementById('monitoringPieChart');
+                if (!ctx) return;
+
+                let monthsToUse = regularMonths;
+                if (monitoringMonth !== '全部') {
+                    monthsToUse = regularMonths.filter(m => extractMonthAbbr(m) === monitoringMonth);
+                    if (monitoringYear !== '全部') {
+                        monthsToUse = monthsToUse.filter(m => extractYear(m) === monitoringYear);
+                    }
+                } else if (monitoringYear !== '全部') {
+                    monthsToUse = regularMonths.filter(m => extractYear(m) === monitoringYear);
+                }
+
+                const catTotals = {};
+                MONITORING_CATEGORIES.forEach(cat => { if (monitoringCategories.includes(cat)) catTotals[cat] = 0; });
+
+                vehicles.forEach(v => {
+                    monthsToUse.forEach(m => {
+                        MONITORING_CATEGORIES.forEach(cat => {
+                            if (monitoringCategories.includes(cat)) {
+                                catTotals[cat] += getMonitoringValue(v, m, cat);
+                            }
+                        });
+                    });
+                });
+
+                const labels = [];
+                const data = [];
+                const colors = [];
+                MONITORING_CATEGORIES.forEach((cat, i) => {
+                    if (monitoringCategories.includes(cat) && catTotals[cat] > 0) {
+                        labels.push(cat);
+                        data.push(parseFloat(catTotals[cat].toFixed(2)));
+                        colors.push(MONITORING_PIE_COLORS[i % MONITORING_PIE_COLORS.length]);
+                    }
+                });
+
+                if (monitoringPieChart) monitoringPieChart.destroy();
+
+                if (data.length === 0) {
+                    monitoringPieChart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: { labels: ['暂无数据'], datasets: [{ data: [1], backgroundColor: ['#eef2f8'],
+                                borderWidth: 0 }] },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false },
+                                tooltip: { enabled: false } } }
+                    });
+                    return;
+                }
+
+                monitoringPieChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{ data: data, backgroundColor: colors, borderWidth: 2, borderColor: '#ffffff' }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { usePointStyle: true, padding: 10, boxWidth: 8,
+                                    font: { size: 9 } } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) :
+                                            '0.0';
+                                        let displayVal = fmtComma(ctx.parsed);
+                                        if (ctx.label === 'Actual Fuel Usage' || ctx.label ===
+                                            'Oil Transffered into Tangki') {
+                                            displayVal += ' L';
+                                        } else {
+                                            displayVal = 'RM ' + displayVal;
+                                        }
+                                        return ctx.label + ': ' + displayVal + ' (' + percentage + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function openMonitoringVehicleModal() {
+                tempMonitoringVehicles = [...monitoringVehicles];
+                monitoringVehicleSearchTerm = '';
+                monitoringModalSearchVehicle.value = '';
+                renderMonitoringVehicleModalList();
+                monitoringVehicleModalOverlay.classList.add('show');
+                monitoringVehicleModalVisible = true;
+                setTimeout(() => monitoringModalSearchVehicle.focus(), 150);
+            }
+
+            function closeMonitoringVehicleModal() {
+                monitoringVehicleModalOverlay.classList.remove('show');
+                monitoringVehicleModalVisible = false;
+            }
+
+            function renderMonitoringVehicleModalList() {
+                const vehicles = monitoringData ? monitoringData.vehicles : [];
+                const term = monitoringVehicleSearchTerm.toLowerCase().trim();
+                const filtered = term ? vehicles.filter(v => (v.vehicle || '').toLowerCase().includes(term) || (v
+                    .brand || '').toLowerCase().includes(term) || (v.type || '').toLowerCase().includes(term)) : vehicles;
+                if (filtered.length === 0) {
+                    monitoringModalVehicleList.innerHTML =
+                        '<div class="rank-empty" style="padding:30px;"><i class="fa-solid fa-search"></i> 无匹配车牌</div>';
+                    return;
+                }
+                let html = '';
+                filtered.forEach(v => {
+                    const vName = v.vehicle || '-';
+                    const isSel = tempMonitoringVehicles.includes(vName);
+                    html += `
+                <div class="modal-vehicle-item${isSel?' selected':''}" data-value="${vName.replace(/"/g,'&quot;')}">
+                  <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+                  <span class="v-name">${vName}</span>
+                  <span class="v-detail">${v.brand||''} - ${v.type||''}</span>
+                </div>`;
+                });
+                monitoringModalVehicleList.innerHTML = html;
+                monitoringModalVehicleList.querySelectorAll('.modal-vehicle-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const val = this.dataset.value;
+                        if (tempMonitoringVehicles.includes(val)) {
+                            tempMonitoringVehicles = tempMonitoringVehicles.filter(v => v !== val);
+                        } else {
+                            tempMonitoringVehicles.push(val);
+                        }
+                        renderMonitoringVehicleModalList();
+                    });
+                });
+            }
+
+            function applyMonitoringVehicleFilter() {
+                monitoringVehicles = [...tempMonitoringVehicles];
+                closeMonitoringVehicleModal();
+                renderMonitoring();
+                const name = monitoringVehicles.length > 0 ? monitoringVehicles.join(', ') : '全部';
+                showToast(`车牌筛选: ${name}`);
+            }
+
+            function clearMonitoringVehicleFilter() {
+                tempMonitoringVehicles = [];
+                renderMonitoringVehicleModalList();
+            }
+
+            function openMonitoringTypeModal() {
+                tempMonitoringTypes = [...monitoringTypes];
+                monitoringTypeSearchTerm = '';
+                monitoringModalSearchType.value = '';
+                renderMonitoringTypeModalList();
+                monitoringTypeModalOverlay.classList.add('show');
+                monitoringTypeModalVisible = true;
+                setTimeout(() => monitoringModalSearchType.focus(), 150);
+            }
+
+            function closeMonitoringTypeModal() {
+                monitoringTypeModalOverlay.classList.remove('show');
+                monitoringTypeModalVisible = false;
+            }
+
+            function renderMonitoringTypeModalList() {
+                const vehicles = monitoringData ? monitoringData.vehicles : [];
+                const combos = [...new Set(vehicles.map(v => getTypeCombo(v)))].sort();
+                const term = monitoringTypeSearchTerm.toLowerCase().trim();
+                const filtered = term ? combos.filter(c => c.toLowerCase().includes(term)) : combos;
+                if (filtered.length === 0) {
+                    monitoringModalTypeList.innerHTML =
+                        '<div class="rank-empty" style="padding:30px;"><i class="fa-solid fa-search"></i> 无匹配车型</div>';
+                    return;
+                }
+                let html = '';
+                filtered.forEach(c => {
+                    const isSel = tempMonitoringTypes.includes(c);
+                    html += `
+                <div class="modal-vehicle-item${isSel?' selected':''}" data-value="${c.replace(/"/g,'&quot;')}">
+                  <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+                  <span class="v-name">${c}</span>
+                </div>`;
+                });
+                monitoringModalTypeList.innerHTML = html;
+                monitoringModalTypeList.querySelectorAll('.modal-vehicle-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const val = this.dataset.value;
+                        if (tempMonitoringTypes.includes(val)) {
+                            tempMonitoringTypes = tempMonitoringTypes.filter(v => v !== val);
+                        } else {
+                            tempMonitoringTypes.push(val);
+                        }
+                        renderMonitoringTypeModalList();
+                    });
+                });
+            }
+
+            function applyMonitoringTypeFilter() {
+                monitoringTypes = [...tempMonitoringTypes];
+                closeMonitoringTypeModal();
+                renderMonitoring();
+                const name = monitoringTypes.length > 0 ? monitoringTypes.join(', ') : '全部';
+                showToast(`车型筛选: ${name}`);
+            }
+
+            function clearMonitoringTypeFilter() {
+                tempMonitoringTypes = [];
+                renderMonitoringTypeModalList();
+            }
+
+            function monitoringExportToExcel() {
+                if (!monitoringData || !monitoringData.vehicles) {
+                    showToast('暂无数据可导出', 'fa-triangle-exclamation');
+                    return;
+                }
+
+                const allMonths = monitoringData.months;
+                const regular = allMonths.filter(m => !isExcludedMonth(m));
+                const excluded = allMonths.filter(isExcludedMonth);
+
+                let filtered = regular;
+                if (monitoringYear !== '全部') filtered = filtered.filter(m => extractYear(m) === monitoringYear);
+                if (monitoringMonth !== '全部') filtered = filtered.filter(m => extractMonthAbbr(m) === monitoringMonth);
+                const displayMonths = monitoringMonth === '全部'
+                    ? [...filtered, ...(monitoringYear !== '全部' ? excluded.filter(m => extractYear(m) ===
+                        monitoringYear) : excluded)]
+                    : filtered;
+
+                const filteredVehicles = getMonitoringFilteredVehicles(monitoringData.vehicles);
+
+                if (!filteredVehicles.length || !displayMonths.length) {
+                    showToast('当前筛选无数据可导出', 'fa-triangle-exclamation');
+                    return;
+                }
+
+                const exportData = [];
+                const exportCats = monitoringCategories;
+
+                const headerRow1 = ['车牌', '车型', '燃油'];
+                displayMonths.forEach(m => {
+                    headerRow1.push(m);
+                    for (let i = 1; i < exportCats.length; i++) headerRow1.push('');
+                });
+                exportData.push(headerRow1);
+
+                const headerRow2 = ['', '', ''];
+                displayMonths.forEach(m => {
+                    exportCats.forEach(cat => { headerRow2.push(cat); });
+                });
+                exportData.push(headerRow2);
+
+                filteredVehicles.forEach(v => {
+                    const row = [v.vehicle || '-', getTypeCombo(v), v.fuel || '-'];
+                    displayMonths.forEach(m => {
+                        exportCats.forEach(cat => {
+                            row.push(getMonitoringValue(v, m, cat));
+                        });
+                    });
+                    exportData.push(row);
+                });
+
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(exportData);
+
+                const fixedCols = 3;
+                const colWidths = [{ wch: 18 }, { wch: 20 }, { wch: 14 }];
+                displayMonths.forEach(m => { exportCats.forEach(cat => { colWidths.push({ wch: 12 }); }); });
+                ws['!cols'] = colWidths;
+
+                const merges = [];
+                let colOffset = fixedCols;
+                displayMonths.forEach((m, idx) => {
+                    if (exportCats.length > 1) {
+                        merges.push({ s: { r: 0, c: colOffset }, e: { r: 0, c: colOffset + exportCats.length - 1 } });
+                    }
+                    colOffset += exportCats.length;
+                });
+                ws['!merges'] = merges;
+
+                XLSX.utils.book_append_sheet(wb, ws, '油耗监测');
+
+                const now = new Date();
+                const timestamp = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+                const filename = `Fuel_Monitoring_${timestamp}.xlsx`;
+
+                XLSX.writeFile(wb, filename);
+                showToast(`已导出: ${filename}`, 'fa-file-excel');
+            }
+
+            function resetMonitoringFilters() {
+                monitoringYear = '全部';
+                monitoringMonth = '全部';
+                monitoringVehicles = [];
+                monitoringTypes = [];
+                monitoringCategories = [...MONITORING_CATEGORIES];
+                monitoringLineShow = { actual_fuel: true, fuel_expense: true, revenue: true };
+                monitoringRankType = 'actual_fuel_high';
+                monitoringYearSelector.value = '全部';
+                updateMonitoringLineToggleUI();
+                updateMonitoringRankToggleUI();
+                renderMonitoring();
+                showToast('已复原所有筛选条件', 'fa-undo');
+            }
+
+            function renderMonitoring() {
+                if (!monitoringData || !monitoringData.months || !monitoringData.vehicles) {
+                    monitoringTableBody.innerHTML =
+                        `<tr><td colspan="10" class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i> 数据格式错误</td></tr>`;
+                    return;
+                }
+                const allMonths = monitoringData.months;
+                const regular = allMonths.filter(m => !isExcludedMonth(m));
+                const excluded = allMonths.filter(isExcludedMonth);
+                const years = [...new Set(regular.map(extractYear))].sort();
+                const monthAbbrs = [...new Set(regular.map(extractMonthAbbr))].sort((a, b) => monthSortKey(a) - monthSortKey(
+                    b));
+                if (!monitoringYearOptionsBuilt) {
+                    monitoringYearSelector.innerHTML = '<option value="全部">全部年份</option>';
+                    years.forEach(y => monitoringYearSelector.innerHTML += `<option value="${y}">${y}</option>`);
+                    const cy = String(new Date().getFullYear());
+                    monitoringYearSelector.value = years.includes(cy) ? cy : (years[0] || '全部');
+                    monitoringYear = monitoringYearSelector.value;
+                    monitoringYearOptionsBuilt = true;
+                }
+                let filtered = regular;
+                if (monitoringYear !== '全部') filtered = filtered.filter(m => extractYear(m) === monitoringYear);
+                if (monitoringMonth !== '全部') filtered = filtered.filter(m => extractMonthAbbr(m) === monitoringMonth);
+                const display = monitoringMonth === '全部' ? [...filtered, ...(monitoringYear !== '全部' ? excluded.filter(
+                    m => extractYear(m) === monitoringYear) : excluded)] : filtered;
+                const allVehicles = monitoringData.vehicles;
+                const filteredVehicles = getMonitoringFilteredVehicles(allVehicles);
+                const currentVehicleCount = filteredVehicles.length;
+                const allTypeCombos = [...new Set(allVehicles.map(v => getTypeCombo(v)))];
+                const totalTypeCount = allTypeCombos.length;
+                monitoringStatVehicles.textContent = currentVehicleCount;
+                monitoringStatVehiclesSub.textContent = monitoringVehicles.length > 0 ?
+                    `已选: ${monitoringVehicles.length}辆` : (monitoringTypes.length > 0 ?
+                        `${monitoringTypes.length}个车型` : '点击选择车牌');
+                monitoringStatTypes.textContent = monitoringTypes.length > 0 ? monitoringTypes.length : totalTypeCount;
+                monitoringStatTypesSub.textContent = monitoringTypes.length > 0 ?
+                    `已选: ${monitoringTypes.length}个` : (monitoringVehicles.length > 0 ?
+                        `车牌: ${monitoringVehicles.length}辆` : '点击选择车型');
+                let totalActualFuel = 0,
+                    totalFuelExpense = 0,
+                    totalOilTransferred = 0;
+                filteredVehicles.forEach(v => {
+                    filtered.forEach(m => {
+                        totalActualFuel += getMonitoringValue(v, m, 'Actual Fuel Usage');
+                        totalFuelExpense += getMonitoringValue(v, m, 'Fuel Expense');
+                        totalOilTransferred += getMonitoringValue(v, m, 'Oil Transffered into Tangki');
+                    });
+                });
+                monitoringStatActualFuel.textContent = fmtComma(totalActualFuel) + ' L';
+                monitoringStatFuelExpense.textContent = 'RM ' + fmtComma(totalFuelExpense);
+                monitoringStatOilTransferred.textContent = fmtComma(totalOilTransferred) + ' L';
+                updateMonitoringTrendChart(filteredVehicles, regular);
+                updateMonitoringRankList(filteredVehicles, regular);
+                updateMonitoringRankToggleUI();
+                updateMonitoringPieChart(filteredVehicles, regular);
+                updateMonitoringLineToggleUI();
+                if (monitoringVehicleModalVisible && monitoringData) renderMonitoringVehicleModalList();
+                if (monitoringTypeModalVisible && monitoringData) renderMonitoringTypeModalList();
+                let head =
+                    `<tr class="filter-row"><td class="col-fixed" colspan="2"><span class="filter-label"><i class="fa-solid fa-calendar-alt"></i> 月份筛选</span><select class="month-selector" id="monitoringMonthSelector"><option value="全部">全部月份</option>`;
+                monthAbbrs.forEach(m => head += `<option value="${m}">${m}</option>`);
+                head += `</select></td>`;
+                head +=
+                    `<td colspan="${display.length+2}" style="background:#f8faff;"><span style="font-size:.75rem;color:#5e7390;"><i class="fa-solid fa-filter"></i> 共 ${filtered.length} 个月份</span></td></tr>`;
+                head += `<tr>`;
+                const fixedCols = ['vehicle', 'brand', 'type', 'fuel'];
+                const fixedLabels = ['车牌', '品牌', '车型', '燃油'];
+                fixedCols.forEach((col, i) => {
+                    const cls = (col === 'vehicle') ? ' col-fixed' : '';
+                    head += `<th class="${cls}">${fixedLabels[i]}</th>`;
+                });
+                display.forEach(m => {
+                    const isSum = isExcludedMonth(m);
+                    head +=
+                        `<th class="col-month"><span style="background:${isSum?'#f0e6d0':'#eef4fd'};padding:2px 10px;border-radius:40px;font-size:.75rem;color:${isSum?'#8a6e3b':'#1f3a5e'};font-weight:${isSum?'700':'500'}">${m}</span></th>`;
+                });
+                head += `</tr>`;
+                monitoringTableHead.innerHTML = head;
+                const monitoringMonthSelector = document.getElementById('monitoringMonthSelector');
+                if (monitoringMonthSelector) monitoringMonthSelector.value = monthAbbrs.includes(monitoringMonth) ?
+                    monitoringMonth : '全部';
+                let body = '';
+                if (!filteredVehicles.length || !display.length) {
+                    monitoringTableBody.innerHTML =
+                        `<tr><td colspan="${display.length+4}" class="empty-state"><i class="fa-solid fa-box-open"></i> 暂无数据</td></tr>`;
+                    return;
+                }
+                filteredVehicles.forEach(v => {
+                    body += `<tr>`;
+                    body += `<td class="col-fixed"><div class="vehicle-cell">${v.vehicle||'-'}</div></td>`;
+                    body += `<td>${v.brand||'-'}</td>`;
+                    body += `<td>${v.type||'-'}</td>`;
+                    body += `<td>${v.fuel||'-'}</td>`;
+                    display.forEach(m => {
+                        body += `<td class="col-month">`;
+                        MONITORING_CATEGORIES.forEach(cat => {
+                            if (!monitoringCategories.includes(cat)) return;
+                            const val = getMonitoringValue(v, m, cat);
+                            let displayVal = '';
+                            if (cat === 'Actual Fuel Usage' || cat === 'Oil Transffered into Tangki') {
+                                displayVal = fmtComma(val) + ' L';
+                            } else {
+                                displayVal = 'RM ' + fmtComma(val);
+                            }
+                            body +=
+                                `<div class="summary-category-item"><span class="summary-cat-name">${cat}</span><span class="summary-val expense">${displayVal}</span></div>`;
+                        });
+                        body += `</td>`;
+                    });
+                    body += `</tr>`;
+                });
+                monitoringTableBody.innerHTML = body;
+            }
             function switchPage(page) {
                 currentPage = page;
                 if (page === 'fuel') {
                     fuelPage.style.display = '';
                     summaryPage.style.display = 'none';
+                    monitoringPage.style.display = 'none';
                     fuelHeaderRight.style.display = '';
                     summaryHeaderRight.style.display = 'none';
+                    monitoringHeaderRight.style.display = 'none';
                     navMenuLabel.textContent = 'Fuel Dashboard';
                     pageTitle.textContent = 'Fuel Dashboard';
                     navDropdown.querySelectorAll('.nav-dropdown-item').forEach(item => {
                         item.classList.toggle('active', item.dataset.page === 'fuel');
                     });
-                } else {
+                } else if (page === 'summary') {
                     fuelPage.style.display = 'none';
                     summaryPage.style.display = '';
+                    monitoringPage.style.display = 'none';
                     fuelHeaderRight.style.display = 'none';
                     summaryHeaderRight.style.display = '';
+                    monitoringHeaderRight.style.display = 'none';
                     navMenuLabel.textContent = 'Summary Report';
                     pageTitle.textContent = 'Summary Report';
                     navDropdown.querySelectorAll('.nav-dropdown-item').forEach(item => {
                         item.classList.toggle('active', item.dataset.page === 'summary');
                     });
                     renderSummary();
+                } else {
+                    fuelPage.style.display = 'none';
+                    summaryPage.style.display = 'none';
+                    monitoringPage.style.display = '';
+                    fuelHeaderRight.style.display = 'none';
+                    summaryHeaderRight.style.display = 'none';
+                    monitoringHeaderRight.style.display = '';
+                    navMenuLabel.textContent = 'Fuel Monitoring';
+                    pageTitle.textContent = 'Fuel Monitoring';
+                    navDropdown.querySelectorAll('.nav-dropdown-item').forEach(item => {
+                        item.classList.toggle('active', item.dataset.page === 'monitoring');
+                    });
+                    renderMonitoring();
                 }
                 navDropdown.classList.remove('show');
                 navMenuBtn.classList.remove('open');
@@ -3673,6 +4544,52 @@
                         summaryExpenseModalOverlay) closeSummaryExpenseModal(); });
                 summaryModalClearExpense.addEventListener('click', clearSummaryExpenseFilter);
                 summaryModalConfirmExpense.addEventListener('click', applySummaryExpenseFilter);
+                // Monitoring 事件
+                monitoringYearSelector.addEventListener('change', e => { monitoringYear = e.target.value;
+                    renderMonitoring(); });
+                monitoringTableHead.addEventListener('change', e => {
+                    if (e.target.id === 'monitoringMonthSelector') { monitoringMonth = e.target.value;
+                        renderMonitoring(); }
+                });
+                monitoringRefreshBtn.addEventListener('click', () => !isRefreshing && loadData(true));
+                monitoringResetBtn.addEventListener('click', resetMonitoringFilters);
+                monitoringExportBtn.addEventListener('click', monitoringExportToExcel);
+                monitoringLineToggle.addEventListener('click', e => {
+                    const btn = e.target.closest('.summary-line-btn');
+                    if (!btn) return;
+                    const line = btn.dataset.mline;
+                    monitoringLineShow[line] = !monitoringLineShow[line];
+                    if (!monitoringLineShow.actual_fuel && !monitoringLineShow.fuel_expense && !monitoringLineShow
+                        .revenue) {
+                        monitoringLineShow[line] = true;
+                    }
+                    renderMonitoring();
+                });
+                monitoringRankToggleGroup.addEventListener('click', e => {
+                    const btn = e.target.closest('.rank-toggle-btn');
+                    if (!btn) return;
+                    monitoringRankType = btn.dataset.mrtype;
+                    renderMonitoring();
+                });
+                monitoringStatCardVehicles.addEventListener('click', () => { if (monitoringData)
+                        openMonitoringVehicleModal(); });
+                monitoringStatCardTypes.addEventListener('click', () => { if (monitoringData)
+                        openMonitoringTypeModal(); });
+                monitoringModalCloseVehicle.addEventListener('click', closeMonitoringVehicleModal);
+                monitoringVehicleModalOverlay.addEventListener('click', function(e) { if (e.target ===
+                        monitoringVehicleModalOverlay) closeMonitoringVehicleModal(); });
+                monitoringModalSearchVehicle.addEventListener('input', function() { monitoringVehicleSearchTerm = this
+                        .value;
+                    renderMonitoringVehicleModalList(); });
+                monitoringModalClearVehicle.addEventListener('click', clearMonitoringVehicleFilter);
+                monitoringModalConfirmVehicle.addEventListener('click', applyMonitoringVehicleFilter);
+                monitoringModalCloseType.addEventListener('click', closeMonitoringTypeModal);
+                monitoringTypeModalOverlay.addEventListener('click', function(e) { if (e.target ===
+                        monitoringTypeModalOverlay) closeMonitoringTypeModal(); });
+                monitoringModalSearchType.addEventListener('input', function() { monitoringTypeSearchTerm = this.value;
+                    renderMonitoringTypeModalList(); });
+                monitoringModalClearType.addEventListener('click', clearMonitoringTypeFilter);
+                monitoringModalConfirmType.addEventListener('click', applyMonitoringTypeFilter);
                 navMenuBtn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     navDropdown.classList.toggle('show');
@@ -3700,6 +4617,8 @@
                         if (summaryTypeModalVisible) closeSummaryTypeModal();
                         if (summaryFuelModalVisible) closeSummaryFuelModal();
                         if (summaryExpenseModalVisible) closeSummaryExpenseModal();
+                        if (monitoringVehicleModalVisible) closeMonitoringVehicleModal();
+                        if (monitoringTypeModalVisible) closeMonitoringTypeModal();
                     }
                 });
             }
